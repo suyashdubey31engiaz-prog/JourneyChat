@@ -3,9 +3,10 @@ import Sidebar      from "../components/Sidebar";
 import ChatWindow   from "../components/chat/ChatWindow";
 import VideoCall    from "../components/VideoCall";
 import Whiteboard   from "../components/Whiteboard";
+import StickyNotes  from "../components/StickyNotes";
 import IncomingCall from "../components/IncomingCall";
 import { ChatContext } from "../context/ChatContext";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext }  from "../context/AuthContext";
 
 // ── Welcome screen ─────────────────────────────────────────────────────────
 const WelcomeScreen = ({ user }) => (
@@ -15,24 +16,24 @@ const WelcomeScreen = ({ user }) => (
     textAlign:"center", padding:"2rem",
   }}>
     {/* Glowing orb */}
-    <div style={{ position:"relative", marginBottom:28 }}>
+    <div style={{ position:"relative", marginBottom:24 }}>
       <div style={{
-        width:88, height:88, borderRadius:28, fontSize:38,
+        width:84, height:84, borderRadius:26, fontSize:36,
         display:"flex", alignItems:"center", justifyContent:"center",
         background:"linear-gradient(135deg,rgba(0,245,255,0.1),rgba(77,121,255,0.1))",
         border:"1px solid rgba(0,245,255,0.2)",
-        boxShadow:"0 0 30px rgba(0,245,255,0.12)",
+        boxShadow:"0 0 28px rgba(0,245,255,0.12)",
         animation:"float 4s ease-in-out infinite",
       }}>💬</div>
       <div style={{
-        position:"absolute", inset:-8, borderRadius:36,
+        position:"absolute", inset:-8, borderRadius:34,
         border:"1px solid rgba(0,245,255,0.1)",
         animation:"spin 8s linear infinite",
       }}/>
     </div>
 
     <h2 style={{
-      fontSize:26, fontWeight:900, marginBottom:10, letterSpacing:"-0.4px",
+      fontSize:24, fontWeight:900, marginBottom:8, letterSpacing:"-0.4px",
       background:"linear-gradient(90deg,#00F5FF,#FFE600,#4D79FF,#00F5FF)",
       backgroundSize:"250% 100%",
       WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text",
@@ -40,25 +41,38 @@ const WelcomeScreen = ({ user }) => (
     }}>
       Welcome, {user?.name?.split(" ")[0]}!
     </h2>
-    <p style={{ fontSize:14, color:"rgba(255,255,255,0.45)", maxWidth:380, lineHeight:1.7, marginBottom:28 }}>
-      Select a contact to start a private conversation, or join Global Chat to talk with everyone.
+    <p style={{ fontSize:13, color:"rgba(255,255,255,0.4)", maxWidth:360, lineHeight:1.7, marginBottom:24 }}>
+      Select a contact to start a private conversation, or explore the features below.
     </p>
 
-    {/* Feature pills */}
-    <div style={{ display:"flex", flexWrap:"wrap", justifyContent:"center", gap:8 }}>
-      {[["💬","Private chat"],["🌍","Global channel"],["📹","Video calls"],["🎨","Whiteboard"]].map(([icon,label])=>(
-        <div key={label} style={{
-          display:"flex", alignItems:"center", gap:6,
-          padding:"8px 14px", borderRadius:99,
-          background:"rgba(255,255,255,0.04)",
-          border:"1px solid rgba(255,255,255,0.07)",
-          color:"rgba(255,255,255,0.55)", fontSize:13,
-        }}>{icon} {label}</div>
+    {/* Feature cards — inspired by colorful card grid references */}
+    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, maxWidth:420, width:"100%" }}>
+      {[
+        { icon:"💬", label:"Private Chat",    desc:"End-to-end encrypted",  color:"#00F5FF", bg:"rgba(0,245,255,0.07)",  border:"rgba(0,245,255,0.18)"  },
+        { icon:"🌍", label:"Global Channel",  desc:"Talk with everyone",     color:"#FFE600", bg:"rgba(255,230,0,0.07)",  border:"rgba(255,230,0,0.18)"  },
+        { icon:"📹", label:"Video Calls",     desc:"HD real-time calls",     color:"#a78bfa", bg:"rgba(139,92,246,0.07)", border:"rgba(139,92,246,0.2)"  },
+        { icon:"🎨", label:"Whiteboard",      desc:"Collaborate visually",   color:"#4ade80", bg:"rgba(34,197,94,0.07)",  border:"rgba(34,197,94,0.18)"  },
+        { icon:"📌", label:"Sticky Notes",    desc:"Personal notes & ideas", color:"#fb923c", bg:"rgba(249,115,22,0.07)", border:"rgba(249,115,22,0.18)" },
+        { icon:"❎", label:"Tic-Tac-Toe",    desc:"Play with contacts",     color:"#fb7185", bg:"rgba(251,113,133,0.07)",border:"rgba(251,113,133,0.2)" },
+      ].map(f=>(
+        <div key={f.label} style={{
+          padding:"14px 16px", borderRadius:14,
+          background:f.bg, border:`1px solid ${f.border}`,
+          display:"flex", alignItems:"center", gap:11,
+          textAlign:"left",
+        }}>
+          <span style={{ fontSize:22, flexShrink:0 }}>{f.icon}</span>
+          <div>
+            <p style={{ margin:0, fontSize:12.5, fontWeight:700, color:"#E8EAF0" }}>{f.label}</p>
+            <p style={{ margin:0, fontSize:11, color:"rgba(255,255,255,0.35)" }}>{f.desc}</p>
+          </div>
+        </div>
       ))}
     </div>
   </div>
 );
 
+// ══════════════════════════════════════════════════════════════════════════════
 const Dashboard = () => {
   const { selectedContact, isCallActive, callContact } = useContext(ChatContext);
   const { user } = useContext(AuthContext);
@@ -69,11 +83,18 @@ const Dashboard = () => {
 
   const renderMain = () => {
     if (inCall) return <VideoCall />;
+
+    // Sticky notes is global — not contact-dependent
+    if (activeTab === "stickynotes") return <StickyNotes />;
+
     if (!selectedContact) return <WelcomeScreen user={user} />;
+
     if (selectedContact._id === "global")
       return <ChatWindow contact={selectedContact} isGlobal setActiveTab={setActiveTab} />;
+
     if (activeTab === "whiteboard")
       return <Whiteboard contact={selectedContact} setActiveTab={setActiveTab} />;
+
     return <ChatWindow contact={selectedContact} setActiveTab={setActiveTab} isGlobal={false} />;
   };
 
@@ -94,7 +115,7 @@ const Dashboard = () => {
       {!inCall && (
         <div style={{ display:"flex", position:"relative", zIndex:10, flexShrink:0 }}>
           <div className="hidden md:flex" style={{ height:"100vh" }}>
-            <Sidebar setActiveTab={setActiveTab} />
+            <Sidebar setActiveTab={setActiveTab} activeTab={activeTab} />
           </div>
         </div>
       )}
@@ -106,8 +127,8 @@ const Dashboard = () => {
             position:"fixed", inset:0, zIndex:30,
             background:"rgba(0,0,0,0.65)", backdropFilter:"blur(4px)",
           }}/>
-          <div style={{ position:"fixed", left:0, top:0, height:"100%", zIndex:40, animation:"slide-left 0.3s ease both" }}>
-            <Sidebar setActiveTab={t => { setActiveTab(t); setMobileSidebar(false); }} />
+          <div style={{ position:"fixed", left:0, top:0, height:"100%", zIndex:40 }}>
+            <Sidebar setActiveTab={t => { setActiveTab(t); setMobileSidebar(false); }} activeTab={activeTab} />
           </div>
         </>
       )}
@@ -120,7 +141,6 @@ const Dashboard = () => {
             display:"flex", alignItems:"center", justifyContent:"space-between",
             marginBottom:10, padding:"0 4px",
           }}
-          // Only show on mobile — inline doesn't support @media so we use a class trick
           className="flex md:hidden">
             <button onClick={() => setMobileSidebar(true)} style={{
               padding:"8px 12px", borderRadius:12,
