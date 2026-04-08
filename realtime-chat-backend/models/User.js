@@ -6,15 +6,22 @@ const UserSchema = new mongoose.Schema({
   name:     { type: String, required: true, trim: true },
   email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
-  // Cloudinary URL — updated via POST /api/users/avatar
   avatar:   { type: String, default: "" },
-  createdAt:{ type: Date,   default: Date.now },
+  bio:      { type: String, default: "", maxlength: 200 },
+
+  // ── Status system ────────────────────────────────────────────────────────
+  // "online" | "away" | "busy" | "invisible" — managed by the user manually
+  // statusExpiry: when the status auto-resets back to "online" (null = never)
+  status:       { type: String, default: "online", enum: ["online","away","busy","invisible"] },
+  statusExpiry: { type: Date,   default: null },
+
+  createdAt: { type: Date, default: Date.now },
 });
 
 // Hash password before save
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  const salt   = await bcrypt.genSalt(10);
+  const salt    = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
