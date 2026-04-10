@@ -1,19 +1,559 @@
-import { createContext, useState, useEffect } from "react";
+// src/context/ThemeContext.jsx
+import { createContext, useState, useEffect, useContext } from "react";
 
 export const ThemeContext = createContext();
 
+// ── 12 Themes ─────────────────────────────────────────────────────────────────
+export const THEMES = [
+  {
+    id: "cyber-neon",
+    label: "Cyber Neon",
+    desc: "Electric blue & cyan",
+    preview: ["#070B14", "#00F5FF", "#FFE600"],
+    dark: true,
+  },
+  {
+    id: "midnight-purple",
+    label: "Midnight Purple",
+    desc: "Deep violet & rose",
+    preview: ["#0D0818", "#B57BFF", "#FF6B9D"],
+    dark: true,
+  },
+  {
+    id: "ocean-deep",
+    label: "Ocean Deep",
+    desc: "Navy & teal waves",
+    preview: ["#060F1C", "#00D4AA", "#FF6B6B"],
+    dark: true,
+  },
+  {
+    id: "matrix",
+    label: "Matrix",
+    desc: "Enter the simulation",
+    preview: ["#000A00", "#00FF41", "#008F11"],
+    dark: true,
+  },
+  {
+    id: "sunset-blaze",
+    label: "Sunset Blaze",
+    desc: "Orange & pink fire",
+    preview: ["#120608", "#FF6B35", "#F7931E"],
+    dark: true,
+  },
+  {
+    id: "aurora",
+    label: "Aurora",
+    desc: "Northern lights dance",
+    preview: ["#060D12", "#7FFFD4", "#6C63FF"],
+    dark: true,
+  },
+  {
+    id: "rose-gold",
+    label: "Rose Gold",
+    desc: "Warm rose & amber",
+    preview: ["#140A0E", "#F4A5AE", "#FFCB77"],
+    dark: true,
+  },
+  {
+    id: "galaxy",
+    label: "Galaxy",
+    desc: "Deep space & stars",
+    preview: ["#03010A", "#7B8FF7", "#C792EA"],
+    dark: true,
+  },
+  {
+    id: "blood-moon",
+    label: "Blood Moon",
+    desc: "Crimson & amber",
+    preview: ["#0E0404", "#FF2D55", "#FF9F0A"],
+    dark: true,
+  },
+  {
+    id: "arctic",
+    label: "Arctic",
+    desc: "Clean ice & light",
+    preview: ["#F0F8FF", "#0080FF", "#00B4D8"],
+    dark: false,
+  },
+  {
+    id: "forest",
+    label: "Forest Dark",
+    desc: "Emerald & gold",
+    preview: ["#040E06", "#2ECC71", "#F1C40F"],
+    dark: true,
+  },
+  {
+    id: "volcano",
+    label: "Volcano",
+    desc: "Lava & dark obsidian",
+    preview: ["#0C0502", "#FF4500", "#FF8C00"],
+    dark: true,
+  },
+];
+
+// ── 12 Fonts ──────────────────────────────────────────────────────────────────
+export const FONTS = [
+  { id: "poppins",      label: "Poppins",          preview: "Aa",  style: "rounded geometric" },
+  { id: "sora",         label: "Sora",             preview: "Aa",  style: "clean modern" },
+  { id: "orbitron",     label: "Orbitron",         preview: "Aa",  style: "sci-fi cyber" },
+  { id: "space-grotesk",label: "Space Grotesk",    preview: "Aa",  style: "techy angular" },
+  { id: "dm-sans",      label: "DM Sans",          preview: "Aa",  style: "minimal clean" },
+  { id: "outfit",       label: "Outfit",           preview: "Aa",  style: "modern geometric" },
+  { id: "nunito",       label: "Nunito",           preview: "Aa",  style: "rounded friendly" },
+  { id: "raleway",      label: "Raleway",          preview: "Aa",  style: "elegant thin" },
+  { id: "exo",          label: "Exo 2",            preview: "Aa",  style: "futuristic" },
+  { id: "jakarta",      label: "Plus Jakarta Sans", preview: "Aa", style: "contemporary" },
+  { id: "josefin",      label: "Josefin Sans",     preview: "Aa",  style: "geometric art deco" },
+  { id: "cabin",        label: "Cabin",            preview: "Aa",  style: "humanist sans" },
+];
+
+// ── CSS variable maps per theme ────────────────────────────────────────────────
+const THEME_VARS = {
+  "cyber-neon": {
+    "--t-bg":        "#070B14",
+    "--t-bg2":       "#0D1526",
+    "--t-bg3":       "#111827",
+    "--t-bg4":       "rgba(13,21,38,0.95)",
+    "--t-primary":   "#00F5FF",
+    "--t-secondary": "#FFE600",
+    "--t-tertiary":  "#4D79FF",
+    "--t-accent4":   "#39FF14",
+    "--t-text":      "#E8EAF0",
+    "--t-text2":     "rgba(232,234,240,0.65)",
+    "--t-text3":     "rgba(232,234,240,0.35)",
+    "--t-border":    "rgba(255,255,255,0.07)",
+    "--t-border2":   "rgba(0,245,255,0.2)",
+    "--t-glow":      "rgba(0,245,255,0.35)",
+    "--t-glow2":     "rgba(255,230,0,0.3)",
+    "--t-card-bg":   "rgba(13,21,38,0.9)",
+    "--t-card-border":"rgba(0,245,255,0.18)",
+    "--t-card-glow": "rgba(0,245,255,0.15)",
+    "--t-grad1":     "#00F5FF",
+    "--t-grad2":     "#FFE600",
+    "--t-grad3":     "#4D79FF",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#004e7c,#0077b6)",
+    "--t-bubble-me-text": "#e0f7fa",
+    "--t-bubble-them-bg": "rgba(255,255,255,0.07)",
+    "--t-bubble-them-border": "rgba(255,255,255,0.09)",
+    "--t-sidebar-bg": "rgba(8,12,22,0.98)",
+    "--t-scrollbar":  "#1a3a5c",
+    "--t-scrollbar-hover": "#00F5FF",
+  },
+  "midnight-purple": {
+    "--t-bg":        "#0D0818",
+    "--t-bg2":       "#150D25",
+    "--t-bg3":       "#1C1235",
+    "--t-bg4":       "rgba(21,13,37,0.95)",
+    "--t-primary":   "#B57BFF",
+    "--t-secondary": "#FF6B9D",
+    "--t-tertiary":  "#6C63FF",
+    "--t-accent4":   "#00D4AA",
+    "--t-text":      "#F0ECFF",
+    "--t-text2":     "rgba(240,236,255,0.65)",
+    "--t-text3":     "rgba(240,236,255,0.35)",
+    "--t-border":    "rgba(181,123,255,0.1)",
+    "--t-border2":   "rgba(181,123,255,0.28)",
+    "--t-glow":      "rgba(181,123,255,0.4)",
+    "--t-glow2":     "rgba(255,107,157,0.3)",
+    "--t-card-bg":   "rgba(21,13,37,0.9)",
+    "--t-card-border":"rgba(181,123,255,0.22)",
+    "--t-card-glow": "rgba(181,123,255,0.18)",
+    "--t-grad1":     "#B57BFF",
+    "--t-grad2":     "#FF6B9D",
+    "--t-grad3":     "#6C63FF",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#5B21B6,#7C3AED)",
+    "--t-bubble-me-text": "#F5F3FF",
+    "--t-bubble-them-bg": "rgba(181,123,255,0.1)",
+    "--t-bubble-them-border": "rgba(181,123,255,0.15)",
+    "--t-sidebar-bg": "rgba(13,8,24,0.98)",
+    "--t-scrollbar":  "#2D1B5E",
+    "--t-scrollbar-hover": "#B57BFF",
+  },
+  "ocean-deep": {
+    "--t-bg":        "#060F1C",
+    "--t-bg2":       "#0A1929",
+    "--t-bg3":       "#0F2234",
+    "--t-bg4":       "rgba(10,25,41,0.95)",
+    "--t-primary":   "#00D4AA",
+    "--t-secondary": "#FF6B6B",
+    "--t-tertiary":  "#00B4D8",
+    "--t-accent4":   "#FFCB77",
+    "--t-text":      "#E0F4FF",
+    "--t-text2":     "rgba(224,244,255,0.65)",
+    "--t-text3":     "rgba(224,244,255,0.35)",
+    "--t-border":    "rgba(0,212,170,0.1)",
+    "--t-border2":   "rgba(0,212,170,0.28)",
+    "--t-glow":      "rgba(0,212,170,0.4)",
+    "--t-glow2":     "rgba(255,107,107,0.3)",
+    "--t-card-bg":   "rgba(10,25,41,0.9)",
+    "--t-card-border":"rgba(0,212,170,0.22)",
+    "--t-card-glow": "rgba(0,212,170,0.18)",
+    "--t-grad1":     "#00D4AA",
+    "--t-grad2":     "#00B4D8",
+    "--t-grad3":     "#FF6B6B",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#065F46,#047857)",
+    "--t-bubble-me-text": "#ECFDF5",
+    "--t-bubble-them-bg": "rgba(0,212,170,0.09)",
+    "--t-bubble-them-border": "rgba(0,212,170,0.14)",
+    "--t-sidebar-bg": "rgba(6,15,28,0.98)",
+    "--t-scrollbar":  "#0A2840",
+    "--t-scrollbar-hover": "#00D4AA",
+  },
+  "matrix": {
+    "--t-bg":        "#000A00",
+    "--t-bg2":       "#001200",
+    "--t-bg3":       "#001A00",
+    "--t-bg4":       "rgba(0,18,0,0.95)",
+    "--t-primary":   "#00FF41",
+    "--t-secondary": "#00CC33",
+    "--t-tertiary":  "#7FFF00",
+    "--t-accent4":   "#ADFF2F",
+    "--t-text":      "#C8FFD4",
+    "--t-text2":     "rgba(200,255,212,0.65)",
+    "--t-text3":     "rgba(200,255,212,0.35)",
+    "--t-border":    "rgba(0,255,65,0.1)",
+    "--t-border2":   "rgba(0,255,65,0.25)",
+    "--t-glow":      "rgba(0,255,65,0.45)",
+    "--t-glow2":     "rgba(127,255,0,0.3)",
+    "--t-card-bg":   "rgba(0,18,0,0.9)",
+    "--t-card-border":"rgba(0,255,65,0.2)",
+    "--t-card-glow": "rgba(0,255,65,0.2)",
+    "--t-grad1":     "#00FF41",
+    "--t-grad2":     "#7FFF00",
+    "--t-grad3":     "#00CC33",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#052e16,#166534)",
+    "--t-bubble-me-text": "#DCFCE7",
+    "--t-bubble-them-bg": "rgba(0,255,65,0.07)",
+    "--t-bubble-them-border": "rgba(0,255,65,0.12)",
+    "--t-sidebar-bg": "rgba(0,10,0,0.98)",
+    "--t-scrollbar":  "#00400A",
+    "--t-scrollbar-hover": "#00FF41",
+  },
+  "sunset-blaze": {
+    "--t-bg":        "#120608",
+    "--t-bg2":       "#1C0A0C",
+    "--t-bg3":       "#250E10",
+    "--t-bg4":       "rgba(28,10,12,0.95)",
+    "--t-primary":   "#FF6B35",
+    "--t-secondary": "#F7931E",
+    "--t-tertiary":  "#FF3CAC",
+    "--t-accent4":   "#FFD700",
+    "--t-text":      "#FFE8DC",
+    "--t-text2":     "rgba(255,232,220,0.65)",
+    "--t-text3":     "rgba(255,232,220,0.35)",
+    "--t-border":    "rgba(255,107,53,0.1)",
+    "--t-border2":   "rgba(255,107,53,0.28)",
+    "--t-glow":      "rgba(255,107,53,0.45)",
+    "--t-glow2":     "rgba(247,147,30,0.35)",
+    "--t-card-bg":   "rgba(28,10,12,0.9)",
+    "--t-card-border":"rgba(255,107,53,0.22)",
+    "--t-card-glow": "rgba(255,107,53,0.2)",
+    "--t-grad1":     "#FF6B35",
+    "--t-grad2":     "#F7931E",
+    "--t-grad3":     "#FF3CAC",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#7C2D12,#C2410C)",
+    "--t-bubble-me-text": "#FFF7ED",
+    "--t-bubble-them-bg": "rgba(255,107,53,0.09)",
+    "--t-bubble-them-border": "rgba(255,107,53,0.14)",
+    "--t-sidebar-bg": "rgba(18,6,8,0.98)",
+    "--t-scrollbar":  "#4A1010",
+    "--t-scrollbar-hover": "#FF6B35",
+  },
+  "aurora": {
+    "--t-bg":        "#060D12",
+    "--t-bg2":       "#0A1520",
+    "--t-bg3":       "#0F1D2C",
+    "--t-bg4":       "rgba(10,21,32,0.95)",
+    "--t-primary":   "#7FFFD4",
+    "--t-secondary": "#6C63FF",
+    "--t-tertiary":  "#00FFCC",
+    "--t-accent4":   "#FF79C6",
+    "--t-text":      "#E0FFEF",
+    "--t-text2":     "rgba(224,255,239,0.65)",
+    "--t-text3":     "rgba(224,255,239,0.35)",
+    "--t-border":    "rgba(127,255,212,0.1)",
+    "--t-border2":   "rgba(127,255,212,0.25)",
+    "--t-glow":      "rgba(127,255,212,0.4)",
+    "--t-glow2":     "rgba(108,99,255,0.35)",
+    "--t-card-bg":   "rgba(10,21,32,0.9)",
+    "--t-card-border":"rgba(127,255,212,0.2)",
+    "--t-card-glow": "rgba(127,255,212,0.18)",
+    "--t-grad1":     "#7FFFD4",
+    "--t-grad2":     "#6C63FF",
+    "--t-grad3":     "#FF79C6",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#064E3B,#065F46)",
+    "--t-bubble-me-text": "#ECFDF5",
+    "--t-bubble-them-bg": "rgba(127,255,212,0.08)",
+    "--t-bubble-them-border": "rgba(127,255,212,0.14)",
+    "--t-sidebar-bg": "rgba(6,13,18,0.98)",
+    "--t-scrollbar":  "#0A2E28",
+    "--t-scrollbar-hover": "#7FFFD4",
+  },
+  "rose-gold": {
+    "--t-bg":        "#140A0E",
+    "--t-bg2":       "#1E1015",
+    "--t-bg3":       "#28151C",
+    "--t-bg4":       "rgba(30,16,21,0.95)",
+    "--t-primary":   "#F4A5AE",
+    "--t-secondary": "#FFCB77",
+    "--t-tertiary":  "#FF85A1",
+    "--t-accent4":   "#FFE4B5",
+    "--t-text":      "#FFE8EC",
+    "--t-text2":     "rgba(255,232,236,0.65)",
+    "--t-text3":     "rgba(255,232,236,0.35)",
+    "--t-border":    "rgba(244,165,174,0.1)",
+    "--t-border2":   "rgba(244,165,174,0.28)",
+    "--t-glow":      "rgba(244,165,174,0.4)",
+    "--t-glow2":     "rgba(255,203,119,0.35)",
+    "--t-card-bg":   "rgba(30,16,21,0.9)",
+    "--t-card-border":"rgba(244,165,174,0.22)",
+    "--t-card-glow": "rgba(244,165,174,0.2)",
+    "--t-grad1":     "#F4A5AE",
+    "--t-grad2":     "#FFCB77",
+    "--t-grad3":     "#FF85A1",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#881337,#9F1239)",
+    "--t-bubble-me-text": "#FFF1F2",
+    "--t-bubble-them-bg": "rgba(244,165,174,0.08)",
+    "--t-bubble-them-border": "rgba(244,165,174,0.14)",
+    "--t-sidebar-bg": "rgba(20,10,14,0.98)",
+    "--t-scrollbar":  "#4A1528",
+    "--t-scrollbar-hover": "#F4A5AE",
+  },
+  "galaxy": {
+    "--t-bg":        "#03010A",
+    "--t-bg2":       "#070412",
+    "--t-bg3":       "#0C071C",
+    "--t-bg4":       "rgba(7,4,18,0.95)",
+    "--t-primary":   "#7B8FF7",
+    "--t-secondary": "#C792EA",
+    "--t-tertiary":  "#A5D6FF",
+    "--t-accent4":   "#FFDF80",
+    "--t-text":      "#EEF0FF",
+    "--t-text2":     "rgba(238,240,255,0.65)",
+    "--t-text3":     "rgba(238,240,255,0.35)",
+    "--t-border":    "rgba(123,143,247,0.1)",
+    "--t-border2":   "rgba(123,143,247,0.26)",
+    "--t-glow":      "rgba(123,143,247,0.4)",
+    "--t-glow2":     "rgba(199,146,234,0.35)",
+    "--t-card-bg":   "rgba(7,4,18,0.9)",
+    "--t-card-border":"rgba(123,143,247,0.2)",
+    "--t-card-glow": "rgba(123,143,247,0.18)",
+    "--t-grad1":     "#7B8FF7",
+    "--t-grad2":     "#C792EA",
+    "--t-grad3":     "#A5D6FF",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#1E1B4B,#312E81)",
+    "--t-bubble-me-text": "#EEF2FF",
+    "--t-bubble-them-bg": "rgba(123,143,247,0.09)",
+    "--t-bubble-them-border": "rgba(123,143,247,0.14)",
+    "--t-sidebar-bg": "rgba(3,1,10,0.98)",
+    "--t-scrollbar":  "#1A1040",
+    "--t-scrollbar-hover": "#7B8FF7",
+  },
+  "blood-moon": {
+    "--t-bg":        "#0E0404",
+    "--t-bg2":       "#180606",
+    "--t-bg3":       "#220808",
+    "--t-bg4":       "rgba(24,6,6,0.95)",
+    "--t-primary":   "#FF2D55",
+    "--t-secondary": "#FF9F0A",
+    "--t-tertiary":  "#FF6B6B",
+    "--t-accent4":   "#FFD60A",
+    "--t-text":      "#FFE8E8",
+    "--t-text2":     "rgba(255,232,232,0.65)",
+    "--t-text3":     "rgba(255,232,232,0.35)",
+    "--t-border":    "rgba(255,45,85,0.1)",
+    "--t-border2":   "rgba(255,45,85,0.28)",
+    "--t-glow":      "rgba(255,45,85,0.45)",
+    "--t-glow2":     "rgba(255,159,10,0.35)",
+    "--t-card-bg":   "rgba(24,6,6,0.9)",
+    "--t-card-border":"rgba(255,45,85,0.22)",
+    "--t-card-glow": "rgba(255,45,85,0.2)",
+    "--t-grad1":     "#FF2D55",
+    "--t-grad2":     "#FF9F0A",
+    "--t-grad3":     "#FF6B6B",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#7F1D1D,#991B1B)",
+    "--t-bubble-me-text": "#FEF2F2",
+    "--t-bubble-them-bg": "rgba(255,45,85,0.08)",
+    "--t-bubble-them-border": "rgba(255,45,85,0.14)",
+    "--t-sidebar-bg": "rgba(14,4,4,0.98)",
+    "--t-scrollbar":  "#4A0A0A",
+    "--t-scrollbar-hover": "#FF2D55",
+  },
+  "arctic": {
+    "--t-bg":        "#F0F8FF",
+    "--t-bg2":       "#E8F4FD",
+    "--t-bg3":       "#DCEEFF",
+    "--t-bg4":       "rgba(240,248,255,0.97)",
+    "--t-primary":   "#0080FF",
+    "--t-secondary": "#00B4D8",
+    "--t-tertiary":  "#0057B7",
+    "--t-accent4":   "#00C6AE",
+    "--t-text":      "#0D1B2A",
+    "--t-text2":     "rgba(13,27,42,0.65)",
+    "--t-text3":     "rgba(13,27,42,0.4)",
+    "--t-border":    "rgba(0,128,255,0.15)",
+    "--t-border2":   "rgba(0,128,255,0.3)",
+    "--t-glow":      "rgba(0,128,255,0.25)",
+    "--t-glow2":     "rgba(0,180,216,0.2)",
+    "--t-card-bg":   "rgba(255,255,255,0.85)",
+    "--t-card-border":"rgba(0,128,255,0.2)",
+    "--t-card-glow": "rgba(0,128,255,0.1)",
+    "--t-grad1":     "#0080FF",
+    "--t-grad2":     "#00B4D8",
+    "--t-grad3":     "#0057B7",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#0057B7,#0080FF)",
+    "--t-bubble-me-text": "#FFFFFF",
+    "--t-bubble-them-bg": "rgba(0,128,255,0.08)",
+    "--t-bubble-them-border": "rgba(0,128,255,0.15)",
+    "--t-sidebar-bg": "rgba(240,248,255,0.98)",
+    "--t-scrollbar":  "#BFD7ED",
+    "--t-scrollbar-hover": "#0080FF",
+  },
+  "forest": {
+    "--t-bg":        "#040E06",
+    "--t-bg2":       "#071A0A",
+    "--t-bg3":       "#0A240E",
+    "--t-bg4":       "rgba(7,26,10,0.95)",
+    "--t-primary":   "#2ECC71",
+    "--t-secondary": "#F1C40F",
+    "--t-tertiary":  "#27AE60",
+    "--t-accent4":   "#1ABC9C",
+    "--t-text":      "#E8F5E9",
+    "--t-text2":     "rgba(232,245,233,0.65)",
+    "--t-text3":     "rgba(232,245,233,0.35)",
+    "--t-border":    "rgba(46,204,113,0.1)",
+    "--t-border2":   "rgba(46,204,113,0.26)",
+    "--t-glow":      "rgba(46,204,113,0.4)",
+    "--t-glow2":     "rgba(241,196,15,0.3)",
+    "--t-card-bg":   "rgba(7,26,10,0.9)",
+    "--t-card-border":"rgba(46,204,113,0.2)",
+    "--t-card-glow": "rgba(46,204,113,0.18)",
+    "--t-grad1":     "#2ECC71",
+    "--t-grad2":     "#F1C40F",
+    "--t-grad3":     "#27AE60",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#064E3B,#065F46)",
+    "--t-bubble-me-text": "#ECFDF5",
+    "--t-bubble-them-bg": "rgba(46,204,113,0.08)",
+    "--t-bubble-them-border": "rgba(46,204,113,0.13)",
+    "--t-sidebar-bg": "rgba(4,14,6,0.98)",
+    "--t-scrollbar":  "#0A300F",
+    "--t-scrollbar-hover": "#2ECC71",
+  },
+  "volcano": {
+    "--t-bg":        "#0C0502",
+    "--t-bg2":       "#180A04",
+    "--t-bg3":       "#221006",
+    "--t-bg4":       "rgba(24,10,4,0.95)",
+    "--t-primary":   "#FF4500",
+    "--t-secondary": "#FF8C00",
+    "--t-tertiary":  "#FF6600",
+    "--t-accent4":   "#FFD700",
+    "--t-text":      "#FFE8D6",
+    "--t-text2":     "rgba(255,232,214,0.65)",
+    "--t-text3":     "rgba(255,232,214,0.35)",
+    "--t-border":    "rgba(255,69,0,0.1)",
+    "--t-border2":   "rgba(255,69,0,0.28)",
+    "--t-glow":      "rgba(255,69,0,0.5)",
+    "--t-glow2":     "rgba(255,140,0,0.35)",
+    "--t-card-bg":   "rgba(24,10,4,0.9)",
+    "--t-card-border":"rgba(255,69,0,0.22)",
+    "--t-card-glow": "rgba(255,69,0,0.22)",
+    "--t-grad1":     "#FF4500",
+    "--t-grad2":     "#FF8C00",
+    "--t-grad3":     "#FFD700",
+    "--t-bubble-me-bg": "linear-gradient(135deg,#7C2D12,#9A3412)",
+    "--t-bubble-me-text": "#FFF7ED",
+    "--t-bubble-them-bg": "rgba(255,69,0,0.08)",
+    "--t-bubble-them-border": "rgba(255,69,0,0.14)",
+    "--t-sidebar-bg": "rgba(12,5,2,0.98)",
+    "--t-scrollbar":  "#4A1A06",
+    "--t-scrollbar-hover": "#FF4500",
+  },
+};
+
+// ── Font family map ────────────────────────────────────────────────────────────
+const FONT_FAMILY = {
+  "poppins":       '"Poppins", sans-serif',
+  "sora":          '"Sora", sans-serif',
+  "orbitron":      '"Orbitron", sans-serif',
+  "space-grotesk": '"Space Grotesk", sans-serif',
+  "dm-sans":       '"DM Sans", sans-serif',
+  "outfit":        '"Outfit", sans-serif',
+  "nunito":        '"Nunito", sans-serif',
+  "raleway":       '"Raleway", sans-serif',
+  "exo":           '"Exo 2", sans-serif',
+  "jakarta":       '"Plus Jakarta Sans", sans-serif',
+  "josefin":       '"Josefin Sans", sans-serif',
+  "cabin":         '"Cabin", sans-serif',
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
 export const ThemeProvider = ({ children }) => {
-  const [darkMode, setDarkMode] = useState(true);
+  const [theme, setThemeState] = useState(() =>
+    localStorage.getItem("jc_theme") || "cyber-neon"
+  );
+  const [font, setFontState] = useState(() =>
+    localStorage.getItem("jc_font") || "poppins"
+  );
 
+  // Apply theme CSS variables to :root
+  const applyTheme = (themeId) => {
+    const vars = THEME_VARS[themeId] || THEME_VARS["cyber-neon"];
+    const root = document.documentElement;
+    Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
+    root.setAttribute("data-theme", themeId);
+    const t = THEMES.find(t => t.id === themeId);
+    if (t?.dark) {
+      root.classList.remove("light-mode");
+      root.classList.add("dark-mode");
+    } else {
+      root.classList.remove("dark-mode");
+      root.classList.add("light-mode");
+    }
+  };
+
+  // Apply font to :root
+  const applyFont = (fontId) => {
+    const family = FONT_FAMILY[fontId] || FONT_FAMILY["poppins"];
+    document.documentElement.style.setProperty("--t-font", family);
+    document.documentElement.setAttribute("data-font", fontId);
+    document.body.style.fontFamily = family;
+    document.getElementById("root").style.fontFamily = family;
+  };
+
+  // On mount — apply persisted settings
   useEffect(() => {
-    document.documentElement.className = darkMode ? "dark" : "light";
-  }, [darkMode]);
+    applyTheme(theme);
+    applyFont(font);
+  }, []); // eslint-disable-line
 
-  const toggleTheme = () => setDarkMode(!darkMode);
+  const setTheme = (id) => {
+    setThemeState(id);
+    localStorage.setItem("jc_theme", id);
+    applyTheme(id);
+  };
+
+  const setFont = (id) => {
+    setFontState(id);
+    localStorage.setItem("jc_font", id);
+    applyFont(id);
+  };
+
+  // Legacy — some components still call toggleTheme for dark/light
+  const darkMode = THEMES.find(t => t.id === theme)?.dark ?? true;
+  const toggleTheme = () => setTheme(darkMode ? "arctic" : "cyber-neon");
 
   return (
-    <ThemeContext.Provider value={{ darkMode, toggleTheme }}>
+    <ThemeContext.Provider value={{
+      theme, setTheme,
+      font, setFont,
+      darkMode, toggleTheme,
+      themes: THEMES,
+      fonts: FONTS,
+    }}>
       {children}
     </ThemeContext.Provider>
   );
 };
+
+export const useTheme = () => useContext(ThemeContext);
