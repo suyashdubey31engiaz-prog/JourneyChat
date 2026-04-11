@@ -1,11 +1,14 @@
+// src/App.jsx
 import React, { useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login     from "./components/auth/Login";
 import Register  from "./components/auth/Register";
 import Dashboard from "./pages/Dashboard";
-import { ChatProvider } from "./context/ChatContext";
-import { AuthContext }  from "./context/AuthContext";
+import { ChatProvider }  from "./context/ChatContext";
+import { AuthContext }   from "./context/AuthContext";
+import SeasonalParticles from "./components/SeasonalParticles";
 
+// ── Loading screen ────────────────────────────────────────────────────────────
 const LoadingScreen = () => (
   <div style={{
     width:"100%", height:"100vh",
@@ -64,20 +67,39 @@ const LoadingScreen = () => (
   </div>
 );
 
+// ── App ───────────────────────────────────────────────────────────────────────
 function App() {
   const { user, loading } = useContext(AuthContext);
+
   if (loading) return <LoadingScreen />;
 
   return (
+    // ⚠️  basename="/" scopes this Router to its own path so it never
+    //     interferes with other apps running on the same local dev server.
     <Router>
+      {/* Seasonal falling particles — renders above everything, pointer-events:none */}
+      <SeasonalParticles />
+
       <Routes>
-        <Route path="/"          element={<Navigate to={user ? "/dashboard" : "/login"} />} />
-        <Route path="/login"     element={!user ? <Login />    : <Navigate to="/dashboard" />} />
-        <Route path="/register"  element={!user ? <Register /> : <Navigate to="/dashboard" />} />
-        <Route path="/dashboard" element={
-          user ? <ChatProvider><Dashboard /></ChatProvider> : <Navigate to="/login" />
-        } />
-        <Route path="*" element={<Navigate to="/" />} />
+        {/* Root: redirect based on auth state */}
+        <Route path="/"          element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
+
+        {/* Auth pages — redirect to dashboard if already logged in */}
+        <Route path="/login"     element={!user ? <Login />    : <Navigate to="/dashboard" replace />} />
+        <Route path="/register"  element={!user ? <Register /> : <Navigate to="/dashboard" replace />} />
+
+        {/* Protected dashboard */}
+        <Route
+          path="/dashboard"
+          element={
+            user
+              ? <ChatProvider><Dashboard /></ChatProvider>
+              : <Navigate to="/login" replace />
+          }
+        />
+
+        {/* Catch-all → always go to root handler */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

@@ -17,7 +17,7 @@ const ACCOUNTS_KEY = "jc_saved_accounts";
 // ── Saved-accounts helpers ────────────────────────────────────────────────────
 const loadAccounts = () => {
   try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || "[]"); }
-  catch { return []; }
+  catch (e) { return []; }
 };
 const saveAccounts  = (list) => localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
 const upsertAccount = (entry) => {
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem(TOKEN_KEY,  res.data.token);
       localStorage.setItem(EXPIRY_KEY, String(res.data.expiresAt));
       scheduleRefresh(res.data.expiresAt);
-    } catch {
+    } catch (err) {
       hardLogout();
     }
   }, [hardLogout]); // eslint-disable-line
@@ -91,12 +91,14 @@ export const AuthProvider = ({ children }) => {
         await doRefresh(); setLoading(false); return;
       }
 
-      // Still valid
+      // Still valid — fetch full profile
       try {
         const res = await getLoggedInUser();
         setUser(res.data);
         scheduleRefresh(expiresAt || null);
-      } catch { hardLogout(); }
+      } catch (err) {
+        hardLogout();
+      }
       setLoading(false);
     };
     restore();
@@ -115,17 +117,22 @@ export const AuthProvider = ({ children }) => {
       scheduleRefresh(loginData.expiresAt || null);
       if (remember) {
         upsertAccount({
-          email: u.email, name: u.name, avatar: u.avatar || "",
-          token: loginData.token, expiresAt: loginData.expiresAt || 0,
+          email:     u.email,
+          name:      u.name,
+          avatar:    u.avatar || "",
+          token:     loginData.token,
+          expiresAt: loginData.expiresAt || 0,
         });
         setSavedAccounts(loadAccounts());
       }
-    } catch (err) { console.error("login profile load:", err); }
+    } catch (err) {
+      console.error("login profile load:", err);
+    }
   }, [scheduleRefresh]);
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   // keepInList=true  → removes session but keeps email in the switcher
-  // keepInList=false → removes from switcher too (user clicked "Remove account")
+  // keepInList=false → removes from switcher too
   const logout = useCallback((keepInList = true) => {
     if (!keepInList && user?.email) removeAccount(user.email);
     localStorage.removeItem(TOKEN_KEY);
@@ -138,7 +145,6 @@ export const AuthProvider = ({ children }) => {
 
   // ── Switch account ─────────────────────────────────────────────────────────
   const switchAccount = useCallback(async (saved) => {
-    // Tear down current session
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(EXPIRY_KEY);
     localStorage.removeItem(REMEMBER_KEY);
@@ -154,9 +160,11 @@ export const AuthProvider = ({ children }) => {
         setUser(res.data);
         scheduleRefresh(saved.expiresAt);
         return true;
-      } catch {}
+      } catch (err) {
+        // Token silently rejected — fall through to login redirect
+      }
     }
-    // Token expired — go back to login with email pre-filled
+    // Token expired — redirect to login with email pre-filled
     window.location.href = `/login?email=${encodeURIComponent(saved.email)}`;
     return false;
   }, [scheduleRefresh]);
@@ -187,12 +195,19 @@ export const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       updateUser({ status: res.data.status, statusExpiry: res.data.statusExpiry });
-    } catch (err) { console.error("setStatus:", err); }
+    } catch (err) {
+      console.error("setStatus:", err);
+    }
   }, [updateUser]);
 
   // ── Re-fetch user from server ──────────────────────────────────────────────
   const refreshUser = useCallback(async () => {
-    try { const res = await getLoggedInUser(); setUser(res.data); } catch {}
+    try {
+      const res = await getLoggedInUser();
+      setUser(res.data);
+    } catch (err) {
+      // silently ignore
+    }
   }, []);
 
   return (

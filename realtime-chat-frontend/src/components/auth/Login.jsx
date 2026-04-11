@@ -1,126 +1,193 @@
-import React, { useState, useContext, useEffect } from "react";
+// src/components/auth/Login.jsx
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import { loginUser } from "../../utils/api";
+import { AuthContext }  from "../../context/AuthContext";
+import { ThemeContext } from "../../context/ThemeContext";
+import { loginUser }    from "../../utils/api";
 
-/* ── Floating orbs ───────────────────────────────────────────────────────── */
-const FloatingOrbs = () => (
-  <div style={{ position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none" }}>
-    {[
-      {w:200,h:200,l:"10%",t:"6%", bg:"rgba(0,245,255,0.09)", d:"0s" },
-      {w:140,h:140,l:"58%",t:"10%",bg:"rgba(77,121,255,0.08)",d:"-5s"},
-      {w:110,h:110,l:"18%",t:"62%",bg:"rgba(255,230,0,0.06)", d:"-9s"},
-      {w:160,h:160,l:"66%",t:"55%",bg:"rgba(0,245,255,0.06)", d:"-3s"},
-    ].map((o,i)=>(
-      <div key={i} style={{ position:"absolute",width:o.w,height:o.h,left:o.l,top:o.t,borderRadius:"50%",background:o.bg,filter:"blur(40px)",animation:"floatOrb 18s ease-in-out infinite",animationDelay:o.d,mixBlendMode:"screen" }}/>
-    ))}
-  </div>
-);
-
-/* ── Device SVG ──────────────────────────────────────────────────────────── */
-const DeviceIllustration = () => (
-  <svg viewBox="0 0 420 290" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width:"100%",maxWidth:380,filter:"drop-shadow(0 10px 36px rgba(0,245,255,0.11))" }}>
-    <rect x="60" y="132" width="196" height="122" rx="10" fill="rgba(13,25,48,0.9)" stroke="rgba(0,245,255,0.28)" strokeWidth="1.3"/>
-    <rect x="68" y="140" width="180" height="106" rx="7" fill="rgba(5,12,28,0.96)"/>
-    <rect x="76" y="148" width="164" height="7" rx="3" fill="rgba(0,245,255,0.1)"/>
-    <rect x="76" y="159" width="104" height="4" rx="2" fill="rgba(255,255,255,0.05)"/>
-    <circle cx="158" cy="204" r="21" fill="rgba(0,245,255,0.08)" stroke="rgba(0,245,255,0.3)" strokeWidth="1.2"/>
-    <path d="M158 214 L158 196 M150 204 L158 196 L166 204" stroke="#00F5FF" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-    <rect x="36" y="253" width="244" height="7" rx="3.5" fill="rgba(13,25,48,0.8)" stroke="rgba(0,245,255,0.16)" strokeWidth="1"/>
-    <rect x="226" y="38" width="96" height="130" rx="10" fill="rgba(13,25,48,0.9)" stroke="rgba(77,121,255,0.36)" strokeWidth="1.3"/>
-    <rect x="233" y="47" width="82" height="111" rx="6" fill="rgba(5,12,28,0.96)"/>
-    <rect x="240" y="55" width="68" height="7" rx="2.5" fill="rgba(77,121,255,0.13)"/>
-    <circle cx="254" cy="89" r="8" fill="rgba(0,245,255,0.17)" stroke="rgba(0,245,255,0.33)" strokeWidth="1"/>
-    <circle cx="274" cy="89" r="8" fill="rgba(77,121,255,0.17)" stroke="rgba(77,121,255,0.33)" strokeWidth="1"/>
-    <rect x="300" y="58" width="60" height="104" rx="12" fill="rgba(13,25,48,0.9)" stroke="rgba(255,230,0,0.3)" strokeWidth="1.3"/>
-    <rect x="307" y="67" width="46" height="87" rx="5" fill="rgba(5,12,28,0.96)"/>
-    <circle cx="354" cy="183" r="14" fill="rgba(255,200,160,0.82)"/>
-    <rect x="342" y="198" width="24" height="36" rx="6" fill="rgba(28,38,68,0.92)"/>
-  </svg>
-);
-
-/* ── Eye icon ────────────────────────────────────────────────────────────── */
+// ── Eye toggle ─────────────────────────────────────────────────────────────────
 const EyeIcon = ({ open }) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-    {open ? <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></> : <><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></>}
+    {open
+      ? <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
+      : <><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></>
+    }
   </svg>
 );
 
-/* ── Input ───────────────────────────────────────────────────────────────── */
-function StyledInput({ label, type="text", value, onChange, placeholder, rightEl, autoComplete }) {
+// ── Theme-aware input ──────────────────────────────────────────────────────────
+function ThemeInput({ label, type = "text", value, onChange, placeholder, rightEl, autoComplete }) {
   const [focused, setFocused] = useState(false);
   return (
     <div>
-      <label style={{ display:"block",fontSize:11,fontWeight:600,letterSpacing:"0.05em",marginBottom:5,color:focused?"#00F5FF":"rgba(255,255,255,0.45)",transition:"color .2s",textTransform:"uppercase" }}>{label}</label>
-      <div style={{ position:"relative" }}>
-        <input type={type} value={value} onChange={onChange} placeholder={placeholder} autoComplete={autoComplete}
-          onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
-          style={{ width:"100%",boxSizing:"border-box",padding:rightEl?"11px 42px 11px 14px":"11px 14px",borderRadius:10,background:focused?"rgba(0,245,255,0.03)":"rgba(255,255,255,0.03)",border:`1.5px solid ${focused?"rgba(0,245,255,0.5)":"rgba(255,255,255,0.09)"}`,boxShadow:focused?"0 0 0 3px rgba(0,245,255,0.07)":"none",color:"#E8EAF0",fontSize:13.5,fontFamily:"'Sora','Poppins',sans-serif",outline:"none",transition:"all .22s" }}/>
-        {rightEl&&<div style={{ position:"absolute",right:12,top:"50%",transform:"translateY(-50%)" }}>{rightEl}</div>}
+      <label style={{
+        display: "block", fontSize: 11, fontWeight: 700, letterSpacing: ".06em",
+        textTransform: "uppercase", marginBottom: 6,
+        color: focused ? "var(--t-primary)" : "var(--t-text3)",
+        transition: "color .2s",
+      }}>{label}</label>
+      <div style={{ position: "relative" }}>
+        <input
+          type={type} value={value} onChange={onChange}
+          placeholder={placeholder} autoComplete={autoComplete}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          style={{
+            width: "100%", boxSizing: "border-box",
+            padding: rightEl ? "11px 42px 11px 14px" : "11px 14px",
+            borderRadius: 11,
+            background: focused ? "color-mix(in srgb, var(--t-primary) 4%, transparent)" : "rgba(255,255,255,0.04)",
+            border: `1.5px solid ${focused ? "var(--t-border2)" : "var(--t-border)"}`,
+            boxShadow: focused ? "0 0 0 3px var(--t-card-glow)" : "none",
+            color: "var(--t-text)", fontSize: 13.5,
+            fontFamily: "var(--t-font, 'Sora','Poppins',sans-serif)",
+            outline: "none", transition: "all .22s",
+          }}
+        />
+        {rightEl && (
+          <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>
+            {rightEl}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-/* ── Saved account chip ──────────────────────────────────────────────────── */
+// ── Saved account chip ────────────────────────────────────────────────────────
 function AccountChip({ acc, onSwitch, onForget }) {
   const [hov, setHov] = useState(false);
   const expired = acc.expiresAt && Date.now() > acc.expiresAt;
   return (
-    <div onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)} style={{
-      display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:12,
-      background:hov?"rgba(0,245,255,0.06)":"rgba(255,255,255,0.03)",
-      border:`1px solid ${hov?"rgba(0,245,255,0.2)":"rgba(255,255,255,0.07)"}`,
-      transition:"all .18s",cursor:"pointer",
-    }} onClick={()=>onSwitch(acc)}>
+    <div
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      onClick={() => onSwitch(acc)}
+      style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "10px 13px", borderRadius: 13,
+        background: hov ? "color-mix(in srgb,var(--t-primary) 8%,transparent)" : "rgba(255,255,255,0.03)",
+        border: `1px solid ${hov ? "var(--t-border2)" : "var(--t-border)"}`,
+        transition: "all .18s", cursor: "pointer",
+        boxShadow: hov ? "0 4px 16px rgba(0,0,0,0.3)" : "none",
+      }}>
       {acc.avatar
-        ? <img src={acc.avatar} style={{ width:34,height:34,borderRadius:"50%",objectFit:"cover",border:"1.5px solid rgba(0,245,255,0.2)",flexShrink:0 }} alt=""/>
-        : <div style={{ width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#0e7490,#1d4ed8)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"white",fontSize:13,flexShrink:0 }}>
-            {(acc.name||"?").charAt(0).toUpperCase()}
+        ? <img src={acc.avatar} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: "1.5px solid var(--t-border2)", flexShrink: 0 }} alt="" />
+        : <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,var(--t-primary),var(--t-tertiary))", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "var(--t-bg)", fontSize: 13, flexShrink: 0 }}>
+            {(acc.name || "?").charAt(0).toUpperCase()}
           </div>
       }
-      <div style={{ flex:1,minWidth:0 }}>
-        <p style={{ margin:0,fontSize:13,fontWeight:700,color:"#E8EAF0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{acc.name}</p>
-        <p style={{ margin:0,fontSize:10.5,color:expired?"#f87171":"rgba(255,255,255,0.35)" }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "var(--t-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{acc.name}</p>
+        <p style={{ margin: 0, fontSize: 10.5, color: expired ? "#f87171" : "var(--t-text3)" }}>
           {expired ? "Session expired — sign in again" : acc.email}
         </p>
       </div>
-      <button onClick={e=>{ e.stopPropagation(); onForget(acc.email); }}
+      <button
+        onClick={e => { e.stopPropagation(); onForget(acc.email); }}
         title="Remove account"
-        style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.25)",fontSize:14,padding:"2px 4px",borderRadius:6,flexShrink:0,transition:"color .15s" }}
-        onMouseEnter={e=>e.currentTarget.style.color="#f87171"}
-        onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.25)"}>✕</button>
+        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--t-text3)", fontSize: 14, padding: "2px 5px", borderRadius: 6, flexShrink: 0, transition: "color .15s" }}
+        onMouseEnter={e => e.currentTarget.style.color = "#f87171"}
+        onMouseLeave={e => e.currentTarget.style.color = "var(--t-text3)"}>✕</button>
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════════════════════════════════ */
+// ── Neon card fan (credit-card aesthetic) ─────────────────────────────────────
+const CardFan = () => (
+  <div style={{ position: "relative", width: 230, height: 150, marginBottom: 32, flexShrink: 0 }}>
+    {/* Card 1 — back-left */}
+    <div style={{
+      position: "absolute", width: 186, height: 115, borderRadius: 20,
+      background: "linear-gradient(135deg, rgba(139,92,246,0.22), rgba(139,92,246,0.08))",
+      border: "1.5px solid rgba(139,92,246,0.4)",
+      boxShadow: "0 4px 24px rgba(139,92,246,0.2)",
+      transform: "rotate(-11deg) translateY(14px) translateX(-12px)",
+      left: 0, top: 0, zIndex: 1, overflow: "hidden",
+    }}>
+      <div style={{ position: "absolute", right: -8, bottom: -8, width: "55%", height: "130%", backgroundImage: "radial-gradient(circle,rgba(139,92,246,0.55) 1.2px,transparent 1.2px)", backgroundSize: "9px 9px", opacity: 0.2 }} />
+    </div>
+
+    {/* Card 2 — mid */}
+    <div style={{
+      position: "absolute", width: 186, height: 115, borderRadius: 20,
+      background: "linear-gradient(135deg, rgba(255,230,0,0.18), rgba(255,179,0,0.07))",
+      border: "1.5px solid rgba(255,230,0,0.4)",
+      boxShadow: "0 4px 24px rgba(255,230,0,0.18)",
+      transform: "rotate(-4deg) translateY(8px) translateX(18px)",
+      left: 0, top: 0, zIndex: 2, overflow: "hidden",
+    }}>
+      <div style={{ position: "absolute", right: -8, bottom: -8, width: "55%", height: "130%", backgroundImage: "radial-gradient(circle,rgba(255,230,0,0.65) 1.2px,transparent 1.2px)", backgroundSize: "9px 9px", opacity: 0.18 }} />
+      <div style={{ position: "absolute", bottom: 14, left: 13, display: "flex", gap: 5, opacity: 0.5 }}>
+        {[0,1,2,3].map(g => (
+          <div key={g} style={{ display: "flex", gap: 2 }}>
+            {[0,1,2,3].map(d => <div key={d} style={{ width: 3, height: 3, borderRadius: "50%", background: "#FFE600" }} />)}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Card 3 — front */}
+    <div style={{
+      position: "absolute", width: 188, height: 117, borderRadius: 20,
+      background: "linear-gradient(135deg, var(--t-card-bg), rgba(0,0,0,0.6))",
+      border: "1.5px solid var(--t-border2)",
+      boxShadow: "0 0 32px var(--t-glow), 0 8px 32px rgba(0,0,0,0.4)",
+      transform: "rotate(3deg) translateY(0px) translateX(34px)",
+      left: 0, top: 0, zIndex: 3, overflow: "hidden",
+    }}>
+      {/* Holographic shimmer */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(125deg,transparent 30%,rgba(255,255,255,0.07) 50%,transparent 70%)", backgroundSize: "300% 300%", animation: "loginHolo 5s linear infinite", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", right: -8, bottom: -8, width: "55%", height: "130%", backgroundImage: "radial-gradient(circle,var(--t-primary) 1.2px,transparent 1.2px)", backgroundSize: "9px 9px", opacity: 0.2 }} />
+      {/* NFC icon */}
+      <div style={{ position: "absolute", top: 10, left: 12, opacity: 0.75 }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t-primary)" strokeWidth="2">
+          <path d="M9 17c2-2 2-6 0-8M12 19.5c3.3-3.3 3.3-9.7 0-13M6 14.5c1-1 1-4 0-5" />
+        </svg>
+      </div>
+      {/* Mastercard circles */}
+      <div style={{ position: "absolute", top: 8, right: 12, display: "flex", alignItems: "center" }}>
+        <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--t-primary)", opacity: 0.6, marginRight: -7 }} />
+        <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--t-secondary)", opacity: 0.55 }} />
+      </div>
+      {/* Card number dots */}
+      <div style={{ position: "absolute", bottom: 14, left: 13, display: "flex", gap: 5, opacity: 0.65 }}>
+        {[0,1,2,3].map(g => (
+          <div key={g} style={{ display: "flex", gap: 2 }}>
+            {[0,1,2,3].map(d => <div key={d} style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--t-primary)" }} />)}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// ── Feature badge pills ───────────────────────────────────────────────────────
+const FEATS = [["💬","Private Chat"],["🌍","Global"],["📹","Video Calls"],["🎨","Whiteboard"]];
+
+// ════════════════════════════════════════════════════════════════════════════════
 export default function Login() {
   const { login, savedAccounts, switchAccount, forgetAccount } = useContext(AuthContext);
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const { theme, activeParticles } = useContext(ThemeContext);
+  const navigate   = useNavigate();
+  const location   = useLocation();
   const successMsg = location.state?.message || "";
+  const params     = new URLSearchParams(location.search);
+  const preEmail   = params.get("email") || "";
 
-  // Pre-fill email if redirected from account switcher
-  const params    = new URLSearchParams(location.search);
-  const preEmail  = params.get("email") || "";
+  const [email,        setEmail]        = useState(preEmail);
+  const [password,     setPassword]     = useState("");
+  const [showPass,     setShowPass]     = useState(false);
+  const [remember,     setRemember]     = useState(true);
+  const [loading,      setLoading]      = useState(false);
+  const [err,          setErr]          = useState("");
+  const [mounted,      setMounted]      = useState(false);
+  const [showAccounts, setShowAccounts] = useState((savedAccounts?.length ?? 0) > 0 && !preEmail);
 
-  const [email,    setEmail]    = useState(preEmail);
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const [remember, setRemember] = useState(true); // default ON
-  const [loading,  setLoading]  = useState(false);
-  const [err,      setErr]      = useState("");
-  const [mounted,  setMounted]  = useState(false);
-  const [showAccounts, setShowAccounts] = useState(savedAccounts.length > 0 && !preEmail);
-
-  useEffect(()=>{ setTimeout(()=>setMounted(true),50); },[]);
+  useEffect(() => { setTimeout(() => setMounted(true), 50); }, []);
 
   const submit = async (e) => {
     e.preventDefault(); setErr(""); setLoading(true);
     try {
       const res = await loginUser({ email, password, remember });
-      // Pass remember flag into context so it stores the account + schedules refresh
       await login(res.data, remember);
       navigate("/dashboard");
     } catch (error) {
@@ -139,153 +206,260 @@ export default function Login() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');
-        @keyframes floatOrb { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
-        @keyframes shimmer  { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
-        @keyframes slideUp  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes spin     { to{transform:rotate(360deg)} }
-        input::placeholder  { color:rgba(255,255,255,0.2); }
-        input:-webkit-autofill{ -webkit-box-shadow:0 0 0 100px rgba(5,12,28,0.98) inset !important;-webkit-text-fill-color:#E8EAF0 !important; }
-        .lp-scroll::-webkit-scrollbar{width:3px}.lp-scroll::-webkit-scrollbar-thumb{background:rgba(0,245,255,0.18);border-radius:3px}.lp-scroll::-webkit-scrollbar-track{background:transparent}
+        @keyframes loginHolo{0%{background-position:200% 200%}100%{background-position:-200% -200%}}
+        @keyframes loginSlideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes loginSpin{to{transform:rotate(360deg)}}
+        @keyframes loginFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+        @keyframes loginPulse{0%,100%{opacity:1}50%{opacity:.45}}
+        .login-scroll::-webkit-scrollbar{width:3px}
+        .login-scroll::-webkit-scrollbar-thumb{background:var(--t-scrollbar,#1a3a5c);border-radius:3px}
+        .login-scroll::-webkit-scrollbar-track{background:transparent}
+        input::placeholder{color:var(--t-text3)!important}
+        input:-webkit-autofill{-webkit-box-shadow:0 0 0 100px var(--t-bg2,#0D1526) inset!important;-webkit-text-fill-color:var(--t-text,#E8EAF0)!important}
       `}</style>
 
-      <div style={{ height:"100vh",width:"100%",display:"flex",overflow:"hidden",fontFamily:"'Sora','Poppins',sans-serif",background:"#060A13",position:"relative" }}>
-        {/* Grid bg */}
-        <div style={{ position:"fixed",inset:0,zIndex:0,pointerEvents:"none",backgroundImage:"linear-gradient(rgba(0,245,255,0.017) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.017) 1px,transparent 1px)",backgroundSize:"56px 56px" }}/>
-        <div style={{ position:"fixed",top:0,left:0,width:420,height:420,borderRadius:"50%",background:"radial-gradient(circle,rgba(0,245,255,0.05) 0%,transparent 65%)",pointerEvents:"none",zIndex:0 }}/>
-        <div style={{ position:"fixed",bottom:0,right:0,width:340,height:340,borderRadius:"50%",background:"radial-gradient(circle,rgba(77,121,255,0.06) 0%,transparent 65%)",pointerEvents:"none",zIndex:0 }}/>
+      <div style={{
+        height: "100vh", width: "100%", display: "flex", overflow: "hidden",
+        fontFamily: "var(--t-font,'Sora','Poppins',sans-serif)",
+        background: "var(--t-bg, #060A13)", position: "relative",
+      }}>
+        {/* Cyber grid background */}
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
+          backgroundImage: "linear-gradient(color-mix(in srgb,var(--t-primary) 2%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--t-primary) 2%,transparent) 1px,transparent 1px)",
+          backgroundSize: "56px 56px",
+        }} />
 
-        {/* ── LEFT PANEL ── */}
-        <div className="lp-scroll" style={{ width:"44%",minWidth:320,height:"100vh",overflowY:"auto",display:"flex",flexDirection:"column",justifyContent:"center",padding:"1.4rem 2.6rem",position:"relative",zIndex:10,opacity:mounted?1:0,transform:mounted?"translateX(0)":"translateX(-26px)",transition:"opacity .5s ease,transform .5s ease" }}>
+        {/* Ambient corner glows */}
+        <div style={{ position: "fixed", top: 0, left: 0, width: 380, height: 380, borderRadius: "50%", background: "radial-gradient(circle,var(--t-card-glow) 0%,transparent 65%)", pointerEvents: "none", zIndex: 0 }} />
+        <div style={{ position: "fixed", bottom: 0, right: 0, width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle,var(--t-glow2) 0%,transparent 65%)", pointerEvents: "none", zIndex: 0, opacity: 0.6 }} />
+
+        {/* ── LEFT PANEL ─────────────────────────────────────────────────── */}
+        <div className="login-scroll" style={{
+          width: "45%", minWidth: 320, height: "100vh", overflowY: "auto",
+          display: "flex", flexDirection: "column", justifyContent: "center",
+          padding: "1.5rem 2.8rem", position: "relative", zIndex: 10,
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? "translateX(0)" : "translateX(-28px)",
+          transition: "opacity .55s ease, transform .55s ease",
+        }}>
 
           {/* Logo */}
-          <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:"1.2rem" }}>
-            <div style={{ width:36,height:36,borderRadius:10,flexShrink:0,background:"linear-gradient(135deg,rgba(0,245,255,0.9),rgba(77,121,255,0.9))",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 18px rgba(0,245,255,0.32)",fontSize:17 }}>💬</div>
-            <span style={{ fontSize:15.5,fontWeight:800,background:"linear-gradient(90deg,#00F5FF,#4D79FF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text" }}>JourneyChat</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "1.3rem" }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 11, flexShrink: 0,
+              background: "linear-gradient(135deg,var(--t-primary),var(--t-tertiary))",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 0 20px var(--t-glow)", fontSize: 18,
+            }}>💬</div>
+            <span style={{
+              fontSize: 16, fontWeight: 800,
+              background: "linear-gradient(90deg,var(--t-grad1),var(--t-grad2),var(--t-grad3))",
+              backgroundSize: "250% 100%",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              animation: "loginHolo 6s linear infinite",
+            }}>JourneyChat</span>
           </div>
 
-          {/* ── SAVED ACCOUNTS SWITCHER ── */}
-          {showAccounts && savedAccounts.length > 0 ? (
-            <div style={{ animation:"slideUp .5s ease both" }}>
-              <h1 style={{ fontSize:24,fontWeight:800,color:"#F0F4FF",margin:"0 0 4px",letterSpacing:"-0.5px" }}>Welcome back 👋</h1>
-              <p style={{ color:"rgba(255,255,255,0.4)",fontSize:13,margin:"0 0 18px" }}>Choose an account to continue</p>
-
-              <div style={{ display:"flex",flexDirection:"column",gap:8,marginBottom:16 }}>
+          {showAccounts && (savedAccounts?.length ?? 0) > 0 ? (
+            /* ── Saved accounts view ── */
+            <div style={{ animation: "loginSlideUp .5s ease both" }}>
+              <h1 style={{ fontSize: 25, fontWeight: 900, color: "var(--t-text)", margin: "0 0 4px", letterSpacing: "-0.5px" }}>Welcome back 👋</h1>
+              <p style={{ color: "var(--t-text3)", fontSize: 13, margin: "0 0 18px" }}>Choose an account to continue</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
                 {savedAccounts.map(acc => (
-                  <AccountChip key={acc.email} acc={acc} onSwitch={handleSwitch} onForget={forgetAccount}/>
+                  <AccountChip key={acc.email} acc={acc} onSwitch={handleSwitch} onForget={forgetAccount} />
                 ))}
               </div>
-
-              <button onClick={()=>setShowAccounts(false)} style={{
-                width:"100%",padding:"11px",borderRadius:11,border:"1px solid rgba(255,255,255,0.1)",
-                background:"rgba(255,255,255,0.04)",color:"rgba(255,255,255,0.6)",cursor:"pointer",
-                fontSize:13,fontWeight:600,fontFamily:"inherit",transition:"all .2s",
+              <button onClick={() => setShowAccounts(false)} style={{
+                width: "100%", padding: "11px", borderRadius: 12,
+                border: "1px solid var(--t-border)", background: "rgba(255,255,255,0.04)",
+                color: "var(--t-text2)", cursor: "pointer", fontSize: 13,
+                fontWeight: 600, fontFamily: "var(--t-font)", transition: "all .2s",
               }}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(0,245,255,0.06)";e.currentTarget.style.color="#00F5FF";e.currentTarget.style.borderColor="rgba(0,245,255,0.2)";}}
-              onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.04)";e.currentTarget.style.color="rgba(255,255,255,0.6)";e.currentTarget.style.borderColor="rgba(255,255,255,0.1)";}}>
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--t-border2)"; e.currentTarget.style.color = "var(--t-primary)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--t-border)";  e.currentTarget.style.color = "var(--t-text2)"; }}>
                 + Use a different account
               </button>
             </div>
           ) : (
             <>
-              {/* Heading */}
-              <div style={{ marginBottom:"1rem",animation:"slideUp .5s ease .08s both" }}>
-                <h1 style={{ fontSize:26,fontWeight:800,letterSpacing:"-0.55px",color:"#F0F4FF",margin:"0 0 5px",lineHeight:1.15 }}>
-                  Sign in to{" "}
-                  <span style={{ background:"linear-gradient(90deg,#00F5FF,#FFE600,#4D79FF,#00F5FF)",backgroundSize:"250% 100%",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",animation:"shimmer 4s linear infinite" }}>JourneyChat</span>
-                </h1>
-                <p style={{ color:"rgba(255,255,255,0.4)",fontSize:13,margin:0 }}>Your conversations, reimagined.</p>
-              </div>
-
-              {/* Back to accounts */}
-              {savedAccounts.length > 0 && !preEmail && (
-                <button onClick={()=>setShowAccounts(true)} style={{ display:"flex",alignItems:"center",gap:6,marginBottom:14,background:"none",border:"none",cursor:"pointer",color:"#00F5FF",fontSize:12.5,fontWeight:600,padding:0,fontFamily:"inherit" }}>
-                  ← Back to saved accounts
+              {savedAccounts?.length > 0 && !preEmail && (
+                <button onClick={() => setShowAccounts(true)} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14, background: "none", border: "none", cursor: "pointer", color: "var(--t-primary)", fontSize: 12.5, fontWeight: 600, padding: 0, fontFamily: "var(--t-font)" }}>
+                  ← Saved accounts
                 </button>
               )}
 
+              <div style={{ marginBottom: "1.1rem", animation: "loginSlideUp .5s ease .08s both" }}>
+                <h1 style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.5px", color: "var(--t-text)", margin: "0 0 5px", lineHeight: 1.15 }}>
+                  Sign in to{" "}
+                  <span style={{
+                    background: "linear-gradient(90deg,var(--t-grad1),var(--t-grad2),var(--t-grad3),var(--t-grad1))",
+                    backgroundSize: "250% 100%",
+                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                    animation: "loginHolo 4s linear infinite",
+                  }}>JourneyChat</span>
+                </h1>
+                <p style={{ color: "var(--t-text3)", fontSize: 13, margin: 0 }}>Your conversations, reimagined.</p>
+              </div>
+
               {/* Alerts */}
-              {successMsg && <div style={{ padding:"9px 13px",borderRadius:9,marginBottom:12,fontSize:12.5,background:"rgba(34,197,94,0.07)",border:"1px solid rgba(34,197,94,0.22)",color:"#4ade80",animation:"slideUp .35s ease both" }}>✓ {successMsg}</div>}
-              {err         && <div style={{ padding:"9px 13px",borderRadius:9,marginBottom:12,fontSize:12.5,background:"rgba(239,68,68,0.07)",border:"1px solid rgba(239,68,68,0.22)",color:"#f87171",animation:"slideUp .35s ease both" }}>⚠ {err}</div>}
-
-              {/* Form */}
-              <form onSubmit={submit} style={{ display:"flex",flexDirection:"column",gap:12 }}>
-                <div style={{ animation:"slideUp .5s ease .1s both" }}>
-                  <StyledInput label="Email Address" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email"/>
+              {successMsg && (
+                <div style={{ padding: "9px 13px", borderRadius: 9, marginBottom: 12, fontSize: 12.5, background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", color: "#4ade80", animation: "loginSlideUp .35s ease both" }}>
+                  ✓ {successMsg}
                 </div>
-                <div style={{ animation:"slideUp .5s ease .16s both" }}>
-                  <StyledInput label="Password" type={showPass?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password"
-                    rightEl={<button type="button" onClick={()=>setShowPass(s=>!s)} style={{ background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.35)",padding:3,lineHeight:1,transition:"color .2s" }} onMouseEnter={e=>e.currentTarget.style.color="#00F5FF"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,0.35)"}><EyeIcon open={showPass}/></button>}/>
+              )}
+              {err && (
+                <div style={{ padding: "9px 13px", borderRadius: 9, marginBottom: 12, fontSize: 12.5, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", animation: "loginSlideUp .35s ease both" }}>
+                  ⚠ {err}
+                </div>
+              )}
+
+              <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+                <div style={{ animation: "loginSlideUp .5s ease .1s both" }}>
+                  <ThemeInput label="Email Address" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
                 </div>
 
-                {/* Remember me + Forgot */}
-                <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",animation:"slideUp .5s ease .2s both" }}>
-                  <label style={{ display:"flex",alignItems:"center",gap:8,cursor:"pointer" }}>
-                    <div onClick={()=>setRemember(r=>!r)} style={{ width:18,height:18,borderRadius:5,cursor:"pointer",flexShrink:0,background:remember?"linear-gradient(135deg,#00F5FF,#4D79FF)":"rgba(255,255,255,0.05)",border:`1.5px solid ${remember?"transparent":"rgba(255,255,255,0.12)"}`,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s",boxShadow:remember?"0 0 9px rgba(0,245,255,0.28)":"none" }}>
-                      {remember&&<svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#020d14" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                <div style={{ animation: "loginSlideUp .5s ease .16s both" }}>
+                  <ThemeInput label="Password" type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password"
+                    rightEl={
+                      <button type="button" onClick={() => setShowPass(s => !s)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--t-text3)", padding: 3, lineHeight: 1, transition: "color .2s" }}
+                        onMouseEnter={e => e.currentTarget.style.color = "var(--t-primary)"}
+                        onMouseLeave={e => e.currentTarget.style.color = "var(--t-text3)"}>
+                        <EyeIcon open={showPass} />
+                      </button>
+                    }
+                  />
+                </div>
+
+                {/* Remember + Forgot */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", animation: "loginSlideUp .5s ease .2s both" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer" }}>
+                    <div
+                      onClick={() => setRemember(r => !r)}
+                      style={{
+                        width: 18, height: 18, borderRadius: 5, flexShrink: 0, cursor: "pointer",
+                        background: remember ? "linear-gradient(135deg,var(--t-primary),var(--t-tertiary))" : "rgba(255,255,255,0.05)",
+                        border: `1.5px solid ${remember ? "transparent" : "var(--t-border)"}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all .2s", boxShadow: remember ? "0 0 10px var(--t-glow)" : "none",
+                      }}>
+                      {remember && <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="var(--t-bg)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                     </div>
                     <div>
-                      <span style={{ fontSize:12.5,color:"rgba(255,255,255,0.6)",userSelect:"none" }}>Keep me signed in</span>
-                      <p style={{ margin:0,fontSize:10,color:"rgba(255,255,255,0.28)",lineHeight:1.3 }}>You'll stay logged in for 15 days</p>
+                      <span style={{ fontSize: 12.5, color: "var(--t-text2)", userSelect: "none" }}>Keep me signed in</span>
+                      <p style={{ margin: 0, fontSize: 10, color: "var(--t-text3)", lineHeight: 1.3 }}>Stays logged in for 15 days</p>
                     </div>
                   </label>
-                  <a href="#" style={{ fontSize:12,color:"#00F5FF",textDecoration:"none",fontWeight:600,opacity:.8,flexShrink:0 }}>Forgot?</a>
+                  <a href="#" style={{ fontSize: 12, color: "var(--t-primary)", textDecoration: "none", fontWeight: 600, flexShrink: 0, opacity: 0.85 }}>Forgot?</a>
                 </div>
 
                 {/* Submit */}
-                <div style={{ animation:"slideUp .5s ease .25s both" }}>
-                  <button type="submit" disabled={loading} style={{ width:"100%",padding:"12px",borderRadius:11,fontWeight:700,fontSize:14,letterSpacing:"0.02em",fontFamily:"'Sora','Poppins',sans-serif",background:loading?"rgba(0,245,255,0.08)":"linear-gradient(135deg,#00C4D0,#0055BB)",color:loading?"rgba(255,255,255,0.28)":"#fff",border:"none",cursor:loading?"not-allowed":"pointer",boxShadow:loading?"none":"0 4px 20px rgba(0,180,220,0.35), 0 0 0 1px rgba(0,245,255,0.13)",transition:"all .22s",display:"flex",alignItems:"center",justifyContent:"center",gap:8 }}
-                    onMouseEnter={e=>{ if(!loading){ e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 6px 26px rgba(0,180,220,0.48)"; }}}
-                    onMouseLeave={e=>{ e.currentTarget.style.transform="translateY(0)"; if(!loading) e.currentTarget.style.boxShadow="0 4px 20px rgba(0,180,220,0.35), 0 0 0 1px rgba(0,245,255,0.13)"; }}>
-                    {loading ? <><svg style={{ animation:"spin 1s linear infinite",width:15,height:15,flexShrink:0 }} fill="none" viewBox="0 0 24 24"><circle style={{opacity:.25}} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path style={{opacity:.75}} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Signing in…</>
-                    : <>Log In <span style={{ fontSize:16 }}>→</span></>}
+                <div style={{ animation: "loginSlideUp .5s ease .25s both" }}>
+                  <button type="submit" disabled={loading} style={{
+                    width: "100%", padding: "12px", borderRadius: 12,
+                    fontWeight: 700, fontSize: 14, fontFamily: "var(--t-font)",
+                    background: loading ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg,var(--t-primary),var(--t-tertiary))",
+                    color: loading ? "var(--t-text3)" : "var(--t-bg)",
+                    border: "none", cursor: loading ? "not-allowed" : "pointer",
+                    boxShadow: loading ? "none" : "0 4px 20px var(--t-glow), 0 0 0 1px var(--t-border2)",
+                    transition: "all .22s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  }}
+                  onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 7px 28px var(--t-glow)"; } }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; if (!loading) e.currentTarget.style.boxShadow = "0 4px 20px var(--t-glow), 0 0 0 1px var(--t-border2)"; }}>
+                    {loading
+                      ? <><svg style={{ animation: "loginSpin 1s linear infinite", width: 15, height: 15 }} fill="none" viewBox="0 0 24 24"><circle style={{ opacity: .25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path style={{ opacity: .75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Signing in…</>
+                      : <>Log In <span style={{ fontSize: 16 }}>→</span></>
+                    }
                   </button>
                 </div>
               </form>
 
-              {/* Social */}
-              <div style={{ display:"flex",alignItems:"center",gap:11,margin:"14px 0 11px" }}>
-                <div style={{ flex:1,height:1,background:"rgba(255,255,255,0.07)" }}/><span style={{ fontSize:11,color:"rgba(255,255,255,0.3)",whiteSpace:"nowrap" }}>or sign in with</span><div style={{ flex:1,height:1,background:"rgba(255,255,255,0.07)" }}/>
+              {/* Divider + Social */}
+              <div style={{ display: "flex", alignItems: "center", gap: 11, margin: "14px 0 11px" }}>
+                <div style={{ flex: 1, height: 1, background: "var(--t-border)" }} />
+                <span style={{ fontSize: 11, color: "var(--t-text3)", whiteSpace: "nowrap" }}>or sign in with</span>
+                <div style={{ flex: 1, height: 1, background: "var(--t-border)" }} />
               </div>
-              <div style={{ display:"flex",gap:9 }}>
-                {[["f","Facebook","#1877F2","rgba(24,119,242,0.07)"],["𝕏","Twitter","#1DA1F2","rgba(29,161,242,0.07)"],["G","Google","#EA4335","rgba(234,67,53,0.07)"]].map(([ic,lb,col,bg])=>{
-                  const [h,setH]=useState(false);
-                  return <button key={lb} type="button" title={lb} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{ display:"flex",alignItems:"center",justifyContent:"center",width:40,height:40,borderRadius:10,cursor:"pointer",background:h?bg:"rgba(255,255,255,0.04)",border:`1.5px solid ${h?col:"rgba(255,255,255,0.08)"}`,transition:"all .2s",color:h?col:"rgba(255,255,255,0.4)",fontSize:15,boxShadow:h?`0 0 12px ${col}30`:"none" }}>{ic}</button>;
+              <div style={{ display: "flex", gap: 9 }}>
+                {[["f","Facebook","#1877F2"],["𝕏","Twitter","#1DA1F2"],["G","Google","#EA4335"]].map(([ic, lb, col]) => {
+                  const [h, setH] = useState(false);
+                  return (
+                    <button key={lb} type="button" title={lb}
+                      onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 10, cursor: "pointer", background: h ? `${col}12` : "rgba(255,255,255,0.04)", border: `1.5px solid ${h ? col : "var(--t-border)"}`, transition: "all .2s", color: h ? col : "var(--t-text3)", fontSize: 15, boxShadow: h ? `0 0 14px ${col}33` : "none" }}>
+                      {ic}
+                    </button>
+                  );
                 })}
               </div>
 
-              <p style={{ marginTop:14,fontSize:13,color:"rgba(255,255,255,0.35)" }}>
-                No account? <Link to="/register" style={{ color:"#00F5FF",fontWeight:700,textDecoration:"none" }}>Create one →</Link>
+              <p style={{ marginTop: 14, fontSize: 13, color: "var(--t-text3)" }}>
+                No account? <Link to="/register" style={{ color: "var(--t-primary)", fontWeight: 700, textDecoration: "none" }}>Create one →</Link>
               </p>
-              <p style={{ fontSize:10.5,color:"rgba(255,255,255,0.13)",marginTop:8 }}>🔒 End-to-end encrypted</p>
+              <p style={{ fontSize: 10.5, color: "color-mix(in srgb,var(--t-text3) 50%,transparent)", marginTop: 8 }}>🔒 End-to-end encrypted</p>
             </>
           )}
         </div>
 
-        {/* ── RIGHT PANEL ── */}
-        <div style={{ flex:1,position:"relative",zIndex:5,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"1.5rem",overflow:"hidden",opacity:mounted?1:0,transform:mounted?"translateX(0)":"translateX(34px)",transition:"opacity .6s ease .14s, transform .6s ease .14s" }}>
-          <div style={{ position:"absolute",inset:"4%",borderRadius:26,background:"linear-gradient(145deg,rgba(0,245,255,0.022) 0%,rgba(77,121,255,0.038) 50%,rgba(255,230,0,0.014) 100%)",border:"1px solid rgba(0,245,255,0.065)" }}/>
-          <FloatingOrbs/>
+        {/* ── RIGHT PANEL ───────────────────────────────────────────────── */}
+        <div style={{
+          flex: 1, position: "relative", zIndex: 5,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          padding: "1.5rem", overflow: "hidden",
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? "translateX(0)" : "translateX(36px)",
+          transition: "opacity .65s ease .15s, transform .65s ease .15s",
+        }}>
+          {/* Inner frame */}
+          <div style={{
+            position: "absolute", inset: "4%", borderRadius: 28,
+            background: "linear-gradient(145deg,color-mix(in srgb,var(--t-primary) 3%,transparent) 0%,color-mix(in srgb,var(--t-tertiary) 4%,transparent) 50%,color-mix(in srgb,var(--t-secondary) 2%,transparent) 100%)",
+            border: "1px solid var(--t-border)",
+          }} />
 
-          {/* Badges */}
-          <div style={{ position:"absolute",top:"10%",left:"7%",zIndex:10,padding:"6px 13px",borderRadius:99,background:"rgba(0,245,255,0.07)",border:"1px solid rgba(0,245,255,0.18)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",gap:6,animation:"floatOrb 5s ease-in-out infinite" }}>
-            <div style={{ width:6,height:6,borderRadius:"50%",background:"#00F5FF",animation:"pulse 2s ease-in-out infinite",boxShadow:"0 0 6px #00F5FF" }}/>
-            <span style={{ color:"#00F5FF",fontSize:11.5,fontWeight:700 }}>1,248 online</span>
+          {/* Floating ambient orbs */}
+          {[
+            { w: 180, h: 180, l: "12%", t: "8%",  color: "var(--t-glow)",  delay: "0s"  },
+            { w: 130, h: 130, l: "55%", t: "11%", color: "var(--t-glow2)", delay: "-6s" },
+            { w: 100, h: 100, l: "20%", t: "60%", color: "var(--t-glow)",  delay: "-11s" },
+            { w: 150, h: 150, l: "60%", t: "55%", color: "var(--t-glow2)", delay: "-4s" },
+          ].map((o, i) => (
+            <div key={i} style={{ position: "absolute", width: o.w, height: o.h, left: o.l, top: o.t, borderRadius: "50%", background: `radial-gradient(circle,${o.color} 0%,transparent 70%)`, filter: "blur(35px)", animation: "loginFloat 18s ease-in-out infinite", animationDelay: o.delay, pointerEvents: "none", zIndex: 1 }} />
+          ))}
+
+          {/* Floating stat badges */}
+          <div style={{ position: "absolute", top: "10%", left: "8%", zIndex: 10, padding: "6px 14px", borderRadius: 99, background: "color-mix(in srgb,var(--t-primary) 8%,transparent)", border: "1px solid var(--t-border2)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", gap: 6, animation: "loginFloat 5s ease-in-out infinite" }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--t-primary)", animation: "loginPulse 2s ease-in-out infinite", boxShadow: "0 0 6px var(--t-primary)" }} />
+            <span style={{ color: "var(--t-primary)", fontSize: 11.5, fontWeight: 700 }}>1,248 online</span>
           </div>
-          <div style={{ position:"absolute",top:"14%",right:"7%",zIndex:10,padding:"6px 13px",borderRadius:99,background:"rgba(255,230,0,0.06)",border:"1px solid rgba(255,230,0,0.16)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",gap:6,animation:"floatOrb 6s ease-in-out infinite",animationDelay:"-3s" }}>
-            <span style={{ fontSize:12 }}>💬</span><span style={{ color:"#FFE600",fontSize:11.5,fontWeight:700 }}>24M msgs today</span>
+          <div style={{ position: "absolute", top: "15%", right: "8%", zIndex: 10, padding: "6px 14px", borderRadius: 99, background: "color-mix(in srgb,var(--t-secondary) 8%,transparent)", border: "1px solid color-mix(in srgb,var(--t-secondary) 35%,transparent)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", gap: 6, animation: "loginFloat 6s ease-in-out infinite", animationDelay: "-3s" }}>
+            <span style={{ fontSize: 12 }}>💬</span>
+            <span style={{ color: "var(--t-secondary)", fontSize: 11.5, fontWeight: 700 }}>24M msgs/day</span>
           </div>
 
-          <div style={{ position:"relative",zIndex:10,width:"80%",maxWidth:380 }}><DeviceIllustration/></div>
-
-          <div style={{ position:"relative",zIndex:10,textAlign:"center",marginTop:"0.9rem" }}>
-            <h2 style={{ fontSize:18,fontWeight:800,color:"#F0F4FF",margin:"0 0 5px",letterSpacing:"-0.2px" }}>Connect across every device</h2>
-            <p style={{ fontSize:12.5,color:"rgba(255,255,255,0.38)",margin:0,maxWidth:300,lineHeight:1.6 }}>Real-time chat, video calls &amp; whiteboards — wherever you are.</p>
+          {/* Card fan — centerpiece */}
+          <div style={{ position: "relative", zIndex: 10 }}>
+            <CardFan />
           </div>
 
-          <div style={{ display:"flex",gap:7,flexWrap:"wrap",justifyContent:"center",marginTop:"0.85rem",position:"relative",zIndex:10 }}>
-            {[["💬","Private Chat"],["🌍","Global Channel"],["📹","Video Calls"],["🎨","Whiteboard"]].map(([icon,label])=>(
-              <div key={label} style={{ display:"flex",alignItems:"center",gap:5,padding:"5px 11px",borderRadius:99,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",color:"rgba(255,255,255,0.43)",fontSize:11.5 }}>{icon} {label}</div>
+          {/* Tagline */}
+          <div style={{ position: "relative", zIndex: 10, textAlign: "center", marginTop: "0.8rem" }}>
+            <h2 style={{ fontSize: 19, fontWeight: 800, color: "var(--t-text)", margin: "0 0 6px", letterSpacing: "-0.2px" }}>
+              Connect across every device
+            </h2>
+            <p style={{ fontSize: 12.5, color: "var(--t-text3)", margin: 0, maxWidth: 300, lineHeight: 1.65 }}>
+              Real-time chat, video calls &amp; whiteboards — wherever you are.
+            </p>
+          </div>
+
+          {/* Feature pills */}
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "center", marginTop: "0.9rem", position: "relative", zIndex: 10 }}>
+            {FEATS.map(([icon, label]) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 99, background: "color-mix(in srgb,var(--t-primary) 6%,transparent)", border: "1px solid var(--t-border)", color: "var(--t-text2)", fontSize: 11.5 }}>
+                {icon} {label}
+              </div>
             ))}
           </div>
         </div>
